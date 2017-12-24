@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head class="pixel-ratio-3 retina ios ios-9 ios-9-1 ios-gt-8 ios-gt-7 ios-gt-6">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>User_Check_Appointment</title>
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+</head>
+<body style="background-color: #f2f2f2;">
+    <div class="container-fluid" style="background-color:  #FFF; padding-top: 20px;">
+        <form id="user_check_appointment_form">
+        请输入您的手机号码 <input type="text" name="phone" class="form-control input-sm">
+        或者输入您的预约编号 <input type="text" name="anumber" class="form-control input-sm">
+        <div style="padding-top: 15px;">
+            <input type="button" value="查询" id="user_appointment_query" class="form-control input-sm btn btn-primary">
+        </div>
+        </form>
+    </div>
+</body>
+
+<script src="/static/jquery-1.12.4.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script>
+
+    $('#user_appointment_query').click(function () {
+        $.ajax({
+            url: "/user_check_appointment",
+            type: "POST",
+            data: $('#user_check_appointment_form').serialize(),
+            success: function (data) {
+                var obj = JSON.parse(data);
+                if(obj.status){
+                    alert(obj.info);
+                    location.reload();
+                }else {
+                    alert(obj.info);
+                }
+            }
+        })
+    });
+
+
+</script>
+</html>

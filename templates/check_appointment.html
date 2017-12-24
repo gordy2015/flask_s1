@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>chceck_appointment</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+</head>
+<body>
+    <table border="1px" class="table table-bordered">
+        <tr>
+        <td>预约编号</td>
+        <td>姓名</td>
+        <td>电话</td>
+        <td>地址</td>
+        <td>备注</td>
+        <td>服务类型</td>
+        <td>时间段</td>
+        </tr>
+        {% for i in appointment %}
+            <tr>
+                <td>{{ i.appoint_num }}</td>
+                <td>{{ i.user }}</td>
+                <td>{{ i.phone }}</td>
+                <td>{{ i.address }}</td>
+                <td>{{ i.note }}</td>
+                <td>
+                    {% for row in m %}
+                        {% if i.appoint_num == row.appoint_num  %}
+                            {{ row.st_a.name }}
+                        {% endif %}
+                    {% endfor %}
+                </td>
+                <td>{{ i.appoint_date }} {{ i.pt_appoint.appointment_time }}</td>
+            </tr>
+        {% endfor %}
+
+    </table>
+    <script src="/static/js/bootstrap.min.js"></script>
+</body>
+</html>

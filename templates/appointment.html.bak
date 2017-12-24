@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>login</title>
+</head>
+<body>
+    <div>
+    <form id="appointment_form">
+        <p>姓名<input type="text" name="user" value={{ name }}></p>
+        <p>联系电话<input type="text" name="phone"></p>
+        <p>地址<input type="text" name="address"></p>
+        <p>备注<input type="text" name="note"></p>
+        <p>服务类型
+            <select name="service_type" multiple>
+                {% for i in st %}
+                    <option value="{{ i.id }}">{{ i.name }}</option>
+                {% endfor %}
+            </select>
+        </p>
+        <p>时间段
+            <input type="date" name="appointment_date" value="{{ today_date }}">
+            <select name="time">
+                {% for i in pt %}
+                    <option value="{{ i.id }}">{{ i.appointment_time }}</option>
+                {% endfor %}
+            </select></p>
+        <p><input type="button" id="add_appointment" value="提交预约"></p>
+    </form>
+    </div>
+
+
+    <div>
+        <form id="user_check_appointment_form">
+        请输入您的预约编号 <input type="text" name="anumber">
+        <input type="button" value="查询" id="user_appointment_query">
+        </form>
+    </div>
+
+
+
+</body>
+
+<script src="/static/jquery-1.12.4.js"></script>
+<script>
+    $('#add_appointment').click(function () {
+        $.ajax({
+            url: "/add_appointment",
+            type: "POST",
+            data: $('#appointment_form').serialize(),
+            success: function (data) {
+                var obj = JSON.parse(data);
+                if(obj.status){
+                    alert(obj.info);
+                    location.reload();
+                }else {
+                    alert(obj.info);
+                }
+            }
+        })
+    })
+
+    $('#user_appointment_query').click(function () {
+        $.ajax({
+            url: "/user_check_appointment",
+            type: "POST",
+            data: $('#user_check_appointment_form').serialize(),
+            success: function (data) {
+                var obj = JSON.parse(data);
+                if(obj.status){
+                    alert(obj.info);
+                    location.reload();
+                }else {
+                    alert(obj.info);
+                }
+            }
+        })
+    })
+
+</script>
+</html>
