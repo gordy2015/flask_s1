@@ -8,6 +8,7 @@ import config
 from xml.etree import ElementTree
 from urllib.request import urlopen
 from wxconfig import Wxinfo
+from functools import wraps
 
 app = Flask(__name__)
 app.config.from_object(config)
@@ -35,16 +36,16 @@ def hello_world():
     elif request.method == 'POST':
         data = request.get_data()
         xml = ElementTree.fromstring(data)
-        print('data:%s; xml:%s'%(data,xml))  #type(request.data) : byte类型
+        #print('data:%s; xml:%s'%(data,xml))  #type(request.data) : byte类型
         MsgType = xml.findtext('.//MsgType')
         ToUserName = xml.findtext('.//ToUserName')
         FromUserName = xml.findtext('.//FromUserName')
         CreateTime = xml.findtext('.//CreateTime')
         MsgId = xml.findtext('.//MsgId')
-        print(MsgType)
+        #print(MsgType)
         if MsgType == 'text':
             Content = xml.findtext('.//Content')
-            print(ToUserName, FromUserName, CreateTime, MsgId, Content)
+            #print(ToUserName, FromUserName, CreateTime, MsgId, Content)
             if '你是谁' in Content:
                 return render_template('wxinfo.html',
                                 ToUserName=ToUserName,
@@ -65,7 +66,7 @@ def hello_world():
                                        Content=Content)
         elif MsgType == 'image':
             MediaId = xml.findtext('.//MediaId')
-            print(MediaId)
+            #print(MediaId)
             Content = '小样，不要斗图好吗，流量党伤不起'
             return render_template('wxinfo.html',
                                        ToUserName=ToUserName,
@@ -74,7 +75,7 @@ def hello_world():
                                        Content=Content)
         elif MsgType == 'voice':
             MediaId = xml.findtext('.//MediaId')
-            print(MediaId)
+            #print(MediaId)
             Content = '小样，你发的是语音，哥睡觉时再听'
             return render_template('wxinfo.html',
                                    ToUserName=ToUserName,
@@ -83,7 +84,7 @@ def hello_world():
                                    Content=Content)
         else:
             MediaId = xml.findtext('.//MediaId')
-            print(MediaId)
+            #print(MediaId)
             Content = '小样，别玩了，早点睡觉吧'
             return render_template('wxinfo.html',
                                    ToUserName=ToUserName,
@@ -92,24 +93,31 @@ def hello_world():
                                    Content=Content)
 
 
+#检测是否有在微信打开的装饰器
+def wxauth(func):
+    @wraps(func)
+    def inner(*args,**kwargs):
+        u = request.url
+        u = u.replace('http','https')
+        # print(u)
+        wh = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid={appid}&redirect_uri={rurl}&response_type=code&scope={scope}&state=987#wechat_redirect'.format(
+            appid=Wxcon.appid, rurl=u, scope='snsapi_base')
+        if not request.args.get('code'):
+            return redirect(wh)
+        return func(*args, **kwargs)
+    return inner
 
 @app.route('/appointment', methods=['GET','POST'])
+@wxauth
 def appointment():
     if request.method == 'GET':
         st = Service_type.query.filter().all()
         pt = Ptime.query.filter().all()
         today_date = datetime.date.today().strftime("%Y-%m-%d")
-        wh = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid={appid}&redirect_uri={rurl}&response_type=code&scope={scope}&state=987#wechat_redirect'.format(appid=Wxcon.appid,rurl=Wxcon.url,scope='snsapi_base')
-        # print(request.args)
-        if request.args.get('code'):
-            c = request.args.get('code')
-            print('code is: %s' %c)
-        else:
-            print('no get code')
-            return redirect(wh)
         return render_template('appointment.html',st=st,pt=pt, today_date=today_date)
 
 @app.route('/add_appointment', methods=['GET','POST'])
+@wxauth
 def add_appointment():
     if request.method == 'POST':
         ret = {'status': True, 'info': 'None', 'data': None}
@@ -159,13 +167,17 @@ def add_appointment():
             ret['info'] = 'request error'
         return json.dumps(ret)
 
+
 @app.route('/check_appointment', methods=['GET','POST'])
+@wxauth
 def check_appointment():
     m = Appoint_ser.query.filter().all()
     appointment = Appointment.query.filter().all()
     return render_template('check_appointment.html',m=m,appointment=appointment)
 
+
 @app.route('/user_check_appointment', methods=['GET','POST'])
+@wxauth
 def user_check_appointment():
     if request.method == 'GET':
         return render_template('user_check_appointment.html')
