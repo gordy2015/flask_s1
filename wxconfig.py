@@ -5,5 +5,6 @@ class Wxinfo(object):
     def __init__(self):
         self.appid = 'xxxxxxxxxxxxxxxxx'
         self.secret = 'yyyyyyyyyyyyyyyyyy'
+        self.url = 'zzzzzzzzzzzzzzzz'
     def cw(self):
         pass

@@ -92,12 +92,21 @@ def hello_world():
                                    Content=Content)
 
 
+
 @app.route('/appointment', methods=['GET','POST'])
 def appointment():
     if request.method == 'GET':
         st = Service_type.query.filter().all()
         pt = Ptime.query.filter().all()
         today_date = datetime.date.today().strftime("%Y-%m-%d")
+        wh = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid={appid}&redirect_uri={rurl}&response_type=code&scope={scope}&state=987#wechat_redirect'.format(appid=Wxcon.appid,rurl=Wxcon.url,scope='snsapi_base')
+        # print(request.args)
+        if request.args.get('code'):
+            c = request.args.get('code')
+            print('code is: %s' %c)
+        else:
+            print('no get code')
+            return redirect(wh)
         return render_template('appointment.html',st=st,pt=pt, today_date=today_date)
 
 @app.route('/add_appointment', methods=['GET','POST'])
