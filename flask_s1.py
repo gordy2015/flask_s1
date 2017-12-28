@@ -9,6 +9,7 @@ from xml.etree import ElementTree
 from urllib.request import urlopen
 from wxconfig import Wxinfo
 from functools import wraps
+import logging
 
 app = Flask(__name__)
 app.config.from_object(config)
@@ -16,6 +17,12 @@ db.init_app(app)
 # with app.app_context():
 #     db.create_all()
 Wxcon = Wxinfo()
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
+                    datefmt='%a, %d %b %Y %H:%M:%S',
+                    filename='wxgzh_test.log',
+                    filemode='w')
 
 @app.route('/',methods=['GET','POST'])
 def hello_world():
@@ -28,7 +35,7 @@ def hello_world():
             s = getattr(Wxcon, 'secret')
             rh = 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={appid}&secret={secret}'.format(appid=a, secret=s)
             a = urlopen(rh).read().decode('utf-8')
-            print(a)
+            logging.debug(a)
         if echostr:
             return echostr
         else:
@@ -92,18 +99,17 @@ def hello_world():
                                    CreateTime=CreateTime,
                                    Content=Content)
 
-
 #检测是否有在微信打开的装饰器
 def wxauth(func):
     @wraps(func)
     def inner(*args,**kwargs):
         u = request.url
         u = u.replace('http','https')
-        # print(u)
         wh = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid={appid}&redirect_uri={rurl}&response_type=code&scope={scope}&state=987#wechat_redirect'.format(
             appid=Wxcon.appid, rurl=u, scope='snsapi_base')
-        if not request.args.get('code'):
-            return redirect(wh)
+        if request.method == 'GET':
+            if not request.args.get('code'):
+                return redirect(wh)
         return func(*args, **kwargs)
     return inner
 
@@ -127,12 +133,11 @@ def add_appointment():
             a = request.form.get('address')
             n = request.form.get('note')
             s = request.form.getlist('service_type')
-            t = request.form.get('time')
             ad = request.form.get('appointment_date')
+            t = request.form.get('time')
             if u and p and a and s:
-                print(u, p, a, n, s, t,ad,type(ad))
+                logging.info(u, p, a, n, s, ad, t)
                 inp = "user={u},phone={p},address={a},note={n},pt_id={t}".format(u=u,p=p,a=a,n=n,t=t)
-                print(inp)
                 l = ad.replace("-","")
                 curr_date = datetime.date.today().strftime("%Y-%m-%d")
                 if int(l) < int(curr_date.replace("-","")):
@@ -158,15 +163,16 @@ def add_appointment():
                         db.session.commit()
                     ret['status'] = True
                     ret['info'] = '预约成功，您的预约号为{r_num}'.format(r_num=r_num)
+
             else:
                 ret['status'] = False
                 ret['info'] = '输入内容不能为空'
+            logging.debug(ret)
         except Exception as e:
-            print('-----------ERROR: %s-------'%e)
+            logging.error(e)
             ret['status'] = False
             ret['info'] = 'request error'
         return json.dumps(ret)
-
 
 @app.route('/check_appointment', methods=['GET','POST'])
 @wxauth
@@ -174,7 +180,6 @@ def check_appointment():
     m = Appoint_ser.query.filter().all()
     appointment = Appointment.query.filter().all()
     return render_template('check_appointment.html',m=m,appointment=appointment)
-
 
 @app.route('/user_check_appointment', methods=['GET','POST'])
 @wxauth
@@ -214,7 +219,6 @@ def user_check_appointment():
                                 r_num=rnum, service_type=qr,user=u, phone=p, address=a, note=n, appoint_date=ad + ' ' + t)
                             # print('PRESULT:%s'%presult)
                             tresult.append(presult)
-
                     else:
                         fresult = False
                         ret['info'] = '查询失败，手机号码不存在'
@@ -255,8 +259,9 @@ def user_check_appointment():
                 ret['info'] = tresult
             else:
                 ret['status'] = False
-        except Exception:
-            print('-----------ERROR: %s-------'%e)
+            logging.debug(ret)
+        except Exception as e:
+            logging.error(e)
             ret['stus'] = False
             ret['info'] = '请求错误'
         return json.dumps(ret)
